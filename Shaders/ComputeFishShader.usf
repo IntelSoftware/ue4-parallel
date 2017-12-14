@@ -1,0 +1,98 @@
+#include "Common.usf"
+
+struct TInfo{
+	int instanceId;
+	float3 position;
+	float3 velocity;
+	float3 acceleration;
+};
+
+float getDistance(float3 v1, float3 v2) {
+	return sqrt((v2[0]-v1[0])*(v2[0]-v1[0]) + (v2[1]-v1[1])*(v2[1]-v1[1]) + (v2[2]-v1[2])*(v2[2]-v1[2]));
+}
+
+RWStructuredBuffer<TInfo> data;
+
+[numthreads(1, 128, 1)]
+void VS_test(uint3 ThreadId : SV_DispatchThreadID)
+{		
+	int fishCount = constants.fishCount;
+	int calculationsPerThread = constants.calculationsPerThread;
+	
+	for (int iteration = 0; iteration < calculationsPerThread; iteration++) {
+		int currentThreadId = calculationsPerThread * ThreadId.y + iteration;
+		
+		if (currentThreadId >= fishCount)
+			return;
+			
+		int currentId = fishCount + currentThreadId;
+		TInfo currentState = data[currentThreadId + fishCount];
+		TInfo newState = data[currentThreadId];
+	
+		float3 steerCohesion = {0.0f, 0.0f, 0.0f};
+		float3 steerSeparation = {0.0f, 0.0f, 0.0f};
+		float3 steerAlignment = {0.0f, 0.0f, 0.0f};
+	
+		float steerCohesionCnt = 0.0f;
+		float steerSeparationCnt = 0.0f;
+		float steerAlignmentCnt = 0.0f;
+	
+		for (int i = fishCount; i < 2 * fishCount; i++) {
+			if (i != currentId) {
+				float d = getDistance(data[i].position, currentState.position);
+				if (d < constants.radiusCohesion) {
+					steerCohesion += data[i].position;
+					steerCohesionCnt++;
+				}
+				if (d < constants.radiusSeparation) {
+					steerSeparation += data[i].position - currentState.position;
+					steerSeparationCnt++;
+				}
+				if (d < constants.radiusAlignment) {
+					steerAlignment += data[i].velocity;
+					steerAlignmentCnt++;
+				}
+			}
+		}
+
+		if (steerCohesionCnt != 0) {
+			steerCohesion = (steerCohesion / steerCohesionCnt - currentState.position);
+			steerCohesion = normalize(steerCohesion);
+		}
+
+		if (steerSeparationCnt != 0) {
+			steerSeparation = -1.f * (steerSeparation / steerSeparationCnt);
+			steerSeparation = normalize(steerSeparation);
+		}
+
+		if (steerAlignmentCnt != 0) {
+			steerAlignment /= steerAlignmentCnt;
+			steerAlignment = normalize(steerAlignment);
+		}
+	
+		newState.acceleration = (steerCohesion * constants.kCohesion + steerSeparation * constants.kSeparation + steerAlignment * constants.kAlignment);
+		newState.acceleration = clamp(newState.acceleration, -1.0f * constants.maxAcceleration, constants.maxAcceleration);
+		newState.acceleration[2] = 0.0f;
+	
+		newState.velocity += newState.acceleration * variables.DeltaTime;
+		newState.velocity = clamp(newState.velocity, -1.0f * constants.maxVelocity, constants.maxVelocity);
+	
+		newState.position += newState.velocity * variables.DeltaTime;
+
+		float3 newVelocity = newState.velocity;
+		if (newState.position[0] > constants.mapRangeX || newState.position[0] < -constants.mapRangeX) {
+			newVelocity[0] *= -1.f;
+		}
+
+		if (newState.position[1] > constants.mapRangeY || newState.position[1] < -constants.mapRangeY) {
+			newVelocity[1] *= -1.f;
+		}
+
+		if (newState.position[2] > constants.mapRangeZ || newState.position[2] < -3000.f) {
+			newVelocity[2] *= -1.f;
+		}
+		newState.velocity = newVelocity;
+	
+		data[currentThreadId] = newState;
+	}
+}

@@ -1,0 +1,15 @@
+{
+    "FileVersion": 3,
+    "FriendlyName": "Shader Fish Plugin",
+    "Version": 1,
+    "VersionName": "1.0",
+    "CreatedBy": "Nikolay Lazarev",
+    "CreatedByURL": "",
+    "Modules": [
+        {
+            "Name": "ShaderFishPlugin",
+            "Type": "Runtime",
+            "LoadingPhase": "PostConfigInit"
+        }
+    ]
+}
