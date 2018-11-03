@@ -105,7 +105,7 @@ AFishAgent::AFishAgent()
 
 void AFishAgent::OnConstruction(const FTransform& Transform)
 {
-	m_instancedStaticMeshComponent = NewObject<UInstancedStaticMeshComponent>(this);
+	m_instancedStaticMeshComponent = NewObject<UHierarchicalInstancedStaticMeshComponent>(this);
 	m_instancedStaticMeshComponent->RegisterComponent();
 	m_instancedStaticMeshComponent->SetStaticMesh(m_staticMesh);
 	m_instancedStaticMeshComponent->SetFlags(RF_Transactional);

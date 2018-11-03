@@ -4,9 +4,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
-#include "Components/InstancedStaticMeshComponent.h"
+//#include "Components/InstancedStaticMeshComponent.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "FishProcessing.h"
 #include "FishAgent.generated.h"
+
 
 struct FishState {
 	int32 instanceId;
@@ -76,7 +78,9 @@ private:
 	UStaticMesh *m_staticMesh;
 
 	// Fish instanced static mesh component. This component contains all of the fish instances on the scene
-	UInstancedStaticMeshComponent *m_instancedStaticMeshComponent;
+	//UInstancedStaticMeshComponent *m_instancedStaticMeshComponent;
+	//Changed to HISM due to editor crashing when ISM is used
+	UHierarchicalInstancedStaticMeshComponent *m_instancedStaticMeshComponent;
 
 	// Pointer to the class FishProcessing which uses compute shader plugin to calculate flocking behaviour on GPU
 	FishProcessing *m_gpuProcessing;
