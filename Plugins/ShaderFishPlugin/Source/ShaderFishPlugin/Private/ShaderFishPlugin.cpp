@@ -15,9 +15,9 @@ FShaderFishPluginModule::FShaderFishPluginModule(const ShaderMetaType::CompiledS
 	m_shaderResource.Bind(Initializer.ParameterMap, TEXT("data"));
 }
 
-void FShaderFishPluginModule::ModifyCompilationEnvironment(EShaderPlatform Platform, FShaderCompilerEnvironment& OutEnvironment)
+void FShaderFishPluginModule::ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
 {
-	FGlobalShader::ModifyCompilationEnvironment(Platform, OutEnvironment);
+	FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 	OutEnvironment.CompilerFlags.Add(CFLAG_StandardOptimization);
 }
 
@@ -41,6 +41,11 @@ void FShaderFishPluginModule::cleanupShaderData(FRHICommandList& commandList)
 		commandList.SetUAVParameter(GetComputeShader(), m_shaderResource.GetBaseIndex(), FUnorderedAccessViewRHIRef());
 }
 
-IMPLEMENT_SHADER_TYPE(, FShaderFishPluginModule, TEXT("ComputeFishShader"),       TEXT("VS_test"),       SF_Compute);
+bool FShaderFishPluginModule::ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+{
+	return true;
+}
+
+IMPLEMENT_SHADER_TYPE(, FShaderFishPluginModule, TEXT("/Plugin/ShaderFishPlugin/Private/ComputeFishShader.usf"),       TEXT("VS_test"),       SF_Compute);
 
 IMPLEMENT_MODULE(FDefaultModuleImpl, ShaderFishPlugin)
